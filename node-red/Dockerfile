@@ -19,7 +19,7 @@ WORKDIR /opt
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Setup base
+# hadolint ignore=DL3018
 RUN \
     apk add --no-cache --virtual .build-dependencies \
         build-base=0.5-r3 \
@@ -33,17 +33,18 @@ RUN \
         nginx=1.26.1-r0 \
         openssh-client=9.7_p1-r4 \
         patch=2.7.6-r10
-        
+
+# hadolint ignore=DL3022
 COPY --from=oven/bun:1.1.22-alpine /usr/local/bin/bun /usr/local/bin/
         
-# Temporarily use the `build`-stage /tmp folder to access the glibc APKs:
+# hadolint ignore=DL3018
 RUN \
     addgroup -g 1000 bun \
     && adduser -u 1000 -G bun -s /bin/sh -D bun \
     && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-    && wget https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-2.37-r1-`uname -m`.apk -O /tmp/glibc.apk \
-    && wget https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-bin-2.37-r1-`uname -m`.apk -O /tmp/glibc-bin.apk \
-    && wget https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-dev-2.37-r1-`uname -m`.apk -O /tmp/glibc-dev.apk \
+    && wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-2.37-r1-$(uname -m).apk" -O /tmp/glibc.apk \
+    && wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-bin-2.37-r1-$(uname -m).apk" -O /tmp/glibc-bin.apk \
+    && wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-dev-2.37-r1-$(uname -m).apk" -O /tmp/glibc-dev.apk \
     && apk --no-cache --force-overwrite --allow-untrusted add \
         /tmp/glibc.apk \
         /tmp/glibc-bin.apk \
