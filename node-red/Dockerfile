@@ -36,15 +36,25 @@ RUN \
 
 # hadolint ignore=DL3022
 COPY --from=oven/bun:1.1.22-alpine /usr/local/bin/bun /usr/local/bin/
-        
+
+RUN <<-EOT
+if [[ $(uname -m) == "aarch64" ]] ;
+    then
+        wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-2.37-r1-aarch64.apk" -O /tmp/glibc.apk
+        wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-bin-2.37-r1-aarch64.apk" -O /tmp/glibc-bin.apk
+        wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-dev-2.37-r1-aarch64.apk" -O /tmp/glibc-dev.apk
+    else 
+        wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk -O /tmp/glibc.apk
+        wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-bin-2.34-r0.apk -O /tmp/glibc-bin.apk
+        wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-dev-2.34-r0.apk -O /tmp/glibc-dev.apk
+fi
+EOT
+
 # hadolint ignore=DL3018
 RUN \
     addgroup -g 1000 bun \
     && adduser -u 1000 -G bun -s /bin/sh -D bun \
     && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-    && wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-2.37-r1-$(uname -m).apk" -O /tmp/glibc.apk \
-    && wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-bin-2.37-r1-$(uname -m).apk" -O /tmp/glibc-bin.apk \
-    && wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-dev-2.37-r1-$(uname -m).apk" -O /tmp/glibc-dev.apk \
     && apk --no-cache --force-overwrite --allow-untrusted add \
         /tmp/glibc.apk \
         /tmp/glibc-bin.apk \
