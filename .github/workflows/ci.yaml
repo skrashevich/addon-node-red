@@ -13,6 +13,6 @@ on:
 
 jobs:
   workflows:
-    uses: hassio-addons/workflows/.github/workflows/addon-ci.yaml@main
+    uses: skrashevich/hassio-addons-workflows/.github/workflows/addon-ci.yaml@main
     with:
       slug: "node-red-bun"

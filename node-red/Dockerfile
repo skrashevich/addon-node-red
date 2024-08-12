@@ -38,7 +38,7 @@ RUN \
 COPY --from=oven/bun:1.1.22-alpine /usr/local/bin/bun /usr/local/bin/
 
 RUN <<-EOT
-if [[ $(uname -m) == "aarch64" ]] ;
+if [[ "$(uname -m)" == "aarch64" ]] ;
     then
         wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-2.37-r1-aarch64.apk" -O /tmp/glibc.apk
         wget -q "https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-bin-2.37-r1-aarch64.apk" -O /tmp/glibc-bin.apk
