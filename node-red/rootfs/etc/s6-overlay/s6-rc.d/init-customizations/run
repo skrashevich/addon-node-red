@@ -27,11 +27,9 @@ if bashio::config.has_value 'npm_packages'; then
         npmlist+=("$package")
     done
 
-    npm install \
-        --no-optional \
-        --only=production \
+    bun install \
         "${npmlist[@]}" \
-           || bashio::exit.nok "Failed to install a specified npm package"
+           || bashio::exit.nok "Failed to install a specified bun package"
 fi
 
 # Executes user commands on startup

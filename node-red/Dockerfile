@@ -1,7 +1,14 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/base-nodejs:0.2.3
+# syntax=docker/dockerfile:1.9
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:16.2.0
+
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
+ARG BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=${BUN_RUNTIME_TRANSPILER_CACHE_PATH}
 
+# Ensure `bun install -g` works
+ARG BUN_INSTALL_BIN=/usr/local/bin
+ENV BUN_INSTALL_BIN=${BUN_INSTALL_BIN}
 # Copy Node-RED package.json
 COPY package.json /opt/
 COPY node-red-dashboard-show-dashboard.patch /tmp/
@@ -16,26 +23,39 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN \
     apk add --no-cache --virtual .build-dependencies \
         build-base=0.5-r3 \
-        linux-headers=6.5-r0 \
-        py3-pip=23.3.1-r0 \
-        python3-dev=3.11.9-r0 \
+        linux-headers=6.6-r0 \
+        py3-pip=24.0-r2 \
+        python3-dev=3.12.3-r1 \
     \
     && apk add --no-cache \
-        git=2.43.4-r0 \
-        icu-data-full=74.1-r0 \
-        nginx=1.24.0-r16 \
-        openssh-client=9.6_p1-r1 \
-        patch=2.7.6-r10 \
+        git=2.45.2-r0 \
+        icu-data-full=74.2-r0 \
+        nginx=1.26.1-r0 \
+        openssh-client=9.7_p1-r4 \
+        patch=2.7.6-r10
+        
+COPY --from=oven/bun:1.1.22-alpine /usr/local/bin/bun /usr/local/bin/
+        
+# Temporarily use the `build`-stage /tmp folder to access the glibc APKs:
+RUN \
+    addgroup -g 1000 bun \
+    && adduser -u 1000 -G bun -s /bin/sh -D bun \
+    && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
+    && wget https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-2.37-r1-`uname -m`.apk -O /tmp/glibc.apk \
+    && wget https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-bin-2.37-r1-`uname -m`.apk -O /tmp/glibc-bin.apk \
+    && wget https://github.com/Rory-Z/alpine-pkg-glibc/releases/download/2.37-r1/glibc-dev-2.37-r1-`uname -m`.apk -O /tmp/glibc-dev.apk \
+    && apk --no-cache --force-overwrite --allow-untrusted add \
+        /tmp/glibc.apk \
+        /tmp/glibc-bin.apk \
+        /tmp/glibc-dev.apk \
+    && ln -s /usr/local/bin/bun /usr/local/bin/bunx \
+    && which bun \
+    && which bunx \
+    && bun --version \
     \
-    && npm install \
-        --no-audit \
-        --no-fund \
-        --no-update-notifier \
-        --omit=dev \
-        --unsafe-perm \
-    && npm rebuild --build-from-source @serialport/bindings-cpp \
+    && bun install \
     \
-    && npm cache clear --force \
+    && bun pm cache rm \
     \
     && echo -e "StrictHostKeyChecking no" >> /etc/ssh/ssh_config \
     \
@@ -46,8 +66,7 @@ RUN \
     && rm -fr \
         /etc/nginx \
         /root/.cache \
-        /root/.npm \
-        /root/.nrpmrc \
+        /root/.bun \
         /tmp/*
 
 # Copy root filesystem
@@ -73,14 +92,14 @@ LABEL \
     io.hass.arch="${BUILD_ARCH}" \
     io.hass.type="addon" \
     io.hass.version=${BUILD_VERSION} \
-    maintainer="Franck Nijhof <frenck@addons.community>" \
+    maintainer="Sergei Krashevich <svk@svk.su>" \
     org.opencontainers.image.title="${BUILD_NAME}" \
     org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
-    org.opencontainers.image.vendor="Home Assistant Community Add-ons" \
-    org.opencontainers.image.authors="Franck Nijhof <frenck@addons.community>" \
+    org.opencontainers.image.vendor="Sergei Krashevich <svk@svk.su>" \
+    org.opencontainers.image.authors="Sergei Krashevich <svk@svk.su>" \
     org.opencontainers.image.licenses="MIT" \
     org.opencontainers.image.url="https://addons.community" \
-    org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
+    org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}/blon/main/node-red/Dockerfile" \
     org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
     org.opencontainers.image.created=${BUILD_DATE} \
     org.opencontainers.image.revision=${BUILD_REF} \

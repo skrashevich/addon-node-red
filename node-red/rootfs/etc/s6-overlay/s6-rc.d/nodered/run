@@ -25,4 +25,4 @@ cd /opt || bashio::exit.nok "Could not change directory to Node-RED"
 
 bashio::log.info "Starting Node-RED..."
 
-exec npm start -- "${options[@]}"
+exec bunx --bun -- "${options[@]}"

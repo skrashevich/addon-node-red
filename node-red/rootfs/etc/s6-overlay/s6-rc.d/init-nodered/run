@@ -51,7 +51,7 @@ fi
 # Ensures conflicting Node-RED packages are absent
 cd /config || bashio::exit.nok "Could not change directory to Node-RED"
 if bashio::fs.file_exists "/config/package.json"; then
-    npm uninstall \
+    bun remove \
         node-red-contrib-home-assistant \
         node-red-contrib-home-assistant-llat \
         node-red-contrib-home-assistant-ws \
